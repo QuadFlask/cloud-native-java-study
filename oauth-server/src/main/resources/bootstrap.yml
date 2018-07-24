@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: auth-server
+  jpa:
+    hibernate:
+      ddl-auto: create
+    generate-ddl: true
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+
+server:
+  port: 9191
+  servlet:
+    context-path: /uaa
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}

@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: greetings-service
+
+server:
+  port: ${PORT:0} # 랜덤 포트
+
+eureka:
+  instance:
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+#eureka:
+#  instance:
+#    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+#    hostname: ${vcap.application.uris[0]:localhost}
+#    nonSecurePort: 80
+#  client:
+#    serviceUrl:
+#      defaultZone: https://service-registry-relaxed-tiger.cfapps.io/eureka/

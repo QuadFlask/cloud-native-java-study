@@ -1,0 +1,21 @@
+# For a quick start check out our HTTP Requests collection (Tools|HTTP Client|Open HTTP Requests Collection).
+#
+# Following HTTP Request Live Templates are available:
+# * 'gtrp' and 'gtr' create a GET request with or without query parameters;
+# * 'ptr' and 'ptrp' create a POST request with a simple or parameter-like body;
+# * 'mptr' and 'fptr' create a POST request to submit a form with a text or file field (multipart/form-data);
+
+# curl -X POST -vu acme:acmesecret http://localhost:9191/uaa/oauth/token
+# -H "Accept: application/json"
+# -d "password=spring&username=jlong&grant_type=password&scope=openid&client_secret=acmesecret&client_id=acme"
+
+POST http://localhost:9191/uaa/oauth/token
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+authorization: Basic aHRtbDU6cGFzc3dvcmQ=
+
+username=jlong&password=spring&client_id=html5&client_secret=password&grant_type=password&scope=openid
+
+###
+
+curl -X POST -H"authorization: Basic aHRtbDU6cGFzc3dvcmQ=" -F"password=spring" -F"client_secret=password" -F"client_id=html5" -F"username=jlong" -F"grant_type=password" -F"scope=openid" http://localhost:9191/uaa/oauth/token

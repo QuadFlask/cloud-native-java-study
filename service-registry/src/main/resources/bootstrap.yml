@@ -1,0 +1,13 @@
+server:
+  port: ${PORT:8761}
+
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    # 서버 자신은 레지스트리에 등록하지 않는다
+
+  server:
+    enable-self-preservation: false
+    # 등록된 인스턴스중 만은 수가 정해진 시간 간격 내에 생존 신호(heartbeat)을 보내오지 않으면 네트워크 문제라고 간주하고 등록을 유지한다.
+    # 이 모드가 자기 보호(self-preservation) 방식. 예제를 위해 인스턴스가 해제되는것을 보기 위해 false 로
