@@ -8,6 +8,9 @@ server:
 eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+    leaseRenewalIntervalInSeconds: 5
+  client:
+    registryFetchIntervalSeconds: 5
 
 security:
   oauth2:

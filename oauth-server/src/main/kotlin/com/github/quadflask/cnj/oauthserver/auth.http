@@ -25,13 +25,13 @@ curl -X POST -H"authorization: Basic aHRtbDU6cGFzc3dvcmQ=" -F"password=spring" -
 
 GET http://localhost:9191/uaa/user
 Accept: application/json
-authorization: bearer 2b84ae35-2336-49ab-a71e-1fe1f6febbe7
+authorization: bearer 4e21d585-582f-4c78-9cb6-82bf7ef510f0
 
 ###
 # authorization_code
 
 GET http://localhost:1234/api/feign/testname
 Accept: application/json
-authorization: bearer 2b84ae35-2336-49ab-a71e-1fe1f6febbe7
+authorization: bearer 4e21d585-582f-4c78-9cb6-82bf7ef510f0
 
 ###
