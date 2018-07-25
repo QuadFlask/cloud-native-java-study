@@ -19,3 +19,19 @@ username=jlong&password=spring&client_id=html5&client_secret=password&grant_type
 ###
 
 curl -X POST -H"authorization: Basic aHRtbDU6cGFzc3dvcmQ=" -F"password=spring" -F"client_secret=password" -F"client_id=html5" -F"username=jlong" -F"grant_type=password" -F"scope=openid" http://localhost:9191/uaa/oauth/token
+
+
+###
+
+GET http://localhost:9191/uaa/user
+Accept: application/json
+authorization: bearer 2b84ae35-2336-49ab-a71e-1fe1f6febbe7
+
+###
+# authorization_code
+
+GET http://localhost:1234/api/feign/testname
+Accept: application/json
+authorization: bearer 2b84ae35-2336-49ab-a71e-1fe1f6febbe7
+
+###

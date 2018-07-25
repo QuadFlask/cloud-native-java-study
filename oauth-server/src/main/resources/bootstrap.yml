@@ -1,6 +1,6 @@
 spring:
   application:
-    name: auth-server
+    name: auth-service
   jpa:
     hibernate:
       ddl-auto: create

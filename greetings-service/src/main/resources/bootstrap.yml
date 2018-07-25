@@ -9,6 +9,15 @@ eureka:
   instance:
     instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
 
+security:
+  oauth2:
+    resource:
+      user-info-uri: http://auth-service/uaa/user
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+
 #eureka:
 #  instance:
 #    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}

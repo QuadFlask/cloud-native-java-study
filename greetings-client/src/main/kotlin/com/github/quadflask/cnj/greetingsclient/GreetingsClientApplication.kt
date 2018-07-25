@@ -12,9 +12,9 @@ import org.springframework.web.client.RestTemplate
 @EnableDiscoveryClient
 @EnableFeignClients
 class GreetingsClientApplication {
-    @Bean
-    @LoadBalanced
-    fun restTemplate(): RestTemplate = RestTemplate()
+//    @Bean
+//    @LoadBalanced
+//    fun restTemplate(): RestTemplate = RestTemplate()
 }
 
 fun main(args: Array<String>) {

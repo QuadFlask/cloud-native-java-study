@@ -13,10 +13,21 @@ import java.util.stream.Stream
 class DataCommandLineRunner(
         val accountRepository: AccountRepository,
         val clientRepository: ClientRepository,
-        val passwordEncoder:PasswordEncoder
+        val passwordEncoder: PasswordEncoder
 ) : CommandLineRunner {
 
     override fun run(vararg args: String) {
+//        mapOf("jlong" to "spring",
+//                "dsyer" to "cloud",
+//                "pwebb" to "boot",
+//                "mminella" to "batch",
+//                "rwinch" to "security")
+//                .map { e -> e.apply { passwordEncoder.encode(this.value) } }
+//                .forEach { (username, password) ->
+//                    accountRepository.save(Account(username, password, true))
+//                }
+
+
         Stream.of("dsyer,cloud", "pwebb,boot", "mminella,batch", "rwinch,security", "jlong,spring")
                 .map { s -> s.split(",") }
                 .forEach { tuple -> accountRepository.save(Account(tuple[0], passwordEncoder.encode(tuple[1]), true)) }
