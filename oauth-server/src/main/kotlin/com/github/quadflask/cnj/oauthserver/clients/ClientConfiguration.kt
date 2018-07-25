@@ -30,7 +30,7 @@ class ClientConfiguration(val loadBalancerClient: LoadBalancerClient) {
                 details.registeredRedirectUri = Collections.singleton(greetingsClientRedirectUri)
 
                 details
-            }.orElseThrow { ClientRegistrationException("no client ${clientId} registered!") }
+            }.orElseThrow { ClientRegistrationException("no client $clientId registered!") }
         }
     }
 
