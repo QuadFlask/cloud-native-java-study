@@ -19,6 +19,7 @@ class InvalidFileFlowConfiguration {
                         val file = File(ogFileName)
 
                         mv(file, errors)
+                        null
                     }
                     .get()
 }

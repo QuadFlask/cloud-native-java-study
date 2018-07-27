@@ -1,5 +1,7 @@
 package com.github.quadflask.cnj.messaging
 
+import org.apache.commons.logging.Log
+import org.apache.commons.logging.LogFactory
 import org.springframework.batch.core.ExitStatus
 import org.springframework.batch.core.Job
 import org.springframework.batch.core.JobExecution
@@ -21,6 +23,8 @@ import java.io.File
 
 @Configuration
 class EtlFlowConfiguration {
+    val log: Log = LogFactory.getLog(javaClass)
+
     @Bean
     fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File, c: BatchChannels, launcher: JobLauncher, job: Job): IntegrationFlow = IntegrationFlows
             .from(Files.inboundAdapter(dir).autoCreateDirectory(true)) { cs ->
@@ -30,18 +34,33 @@ class EtlFlowConfiguration {
                 val absolutePath = file.absolutePath
                 val params = JobParametersBuilder().addString("file", absolutePath).toJobParameters()
 
-                MessageBuilder.withPayload(JobLaunchRequest(job, params))
+                log.info("absolutePath: $absolutePath")
+
+                MessageBuilder
+                        .withPayload(JobLaunchRequest(job, params))
                         .setHeader(FileHeaders.ORIGINAL_FILE, absolutePath)
                         .copyHeadersIfAbsent(headers)
                         .build()
             }
             .handle(JobLaunchingGateway(launcher))
             .routeToRecipients { spec ->
-                spec.recipient(c.invalid(), MessageSelector { notFinished(it) })
-                        .recipient(c.completed(), MessageSelector { finished(it) })
-            }.get()
+                spec.recipient(c.invalid(), csvSelector(this::notFinished))
+                        .recipient(c.completed(), csvSelector(this::finished))
+            }
+            .get()
 
-    fun finished(msg: Message<*>): Boolean = JobExecution::class.java.cast(msg.payload).exitStatus == ExitStatus.COMPLETED
+    fun finished(msg: Message<*>): Boolean {
+        return JobExecution::class.java.cast(msg.payload).exitStatus == ExitStatus.COMPLETED
+    }
 
     fun notFinished(msg: Message<*>): Boolean = !this.finished(msg)
+
+    fun csvSelector(f: (m: Message<*>) -> Boolean): MessageSelector {
+        return MessageSelector { msg ->
+            val je = JobExecution::class.java.cast(msg.payload)
+            val fileName = je.jobParameters.getString("file")
+            if (fileName.endsWith(".csv")) f(msg)
+            else false
+        }
+    }
 }

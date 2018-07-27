@@ -1,11 +1,14 @@
 package com.github.quadflask.cnj.messaging
 
+import org.springframework.boot.WebApplicationType
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.runApplication
+import org.springframework.boot.builder.SpringApplicationBuilder
 
 @SpringBootApplication
 class MessagingApplication
 
 fun main(args: Array<String>) {
-    runApplication<MessagingApplication>(*args)
+    SpringApplicationBuilder(MessagingApplication::class.java)
+            .web(WebApplicationType.NONE)
+            .run(*args)
 }

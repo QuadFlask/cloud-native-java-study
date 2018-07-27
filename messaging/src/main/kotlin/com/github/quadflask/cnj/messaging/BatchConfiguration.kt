@@ -12,12 +12,12 @@ import org.springframework.batch.item.ItemReader
 import org.springframework.batch.item.ItemWriter
 import org.springframework.batch.item.database.JdbcBatchItemWriter
 import org.springframework.batch.item.database.builder.JdbcBatchItemWriterBuilder
+import org.springframework.batch.item.file.FlatFileItemReader
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder
 import org.springframework.batch.repeat.RepeatStatus
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.io.FileSystemResource
 import org.springframework.core.io.Resource
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
@@ -49,7 +49,8 @@ class BatchConfiguration {
                 .tasklet { contribution, chunkContext ->
                     template.update("delete from CONTACT")
                     RepeatStatus.FINISHED
-                }.build()
+                }
+                .build()
 
         val fileToJdbc = stepBuilderFactory.get("file-to-jdbc-fileToJdbc")
                 .chunk<Contact, Contact>(5)
@@ -62,8 +63,9 @@ class BatchConfiguration {
                     LogFactory.getLog(javaClass).info("skipping ")
                     t.javaClass.isAssignableFrom(InvalidEmailException::class.java)
                 }
-                .retry(HttpStatusCodeException::class.java) // <3>
-                .retryLimit(2).build()
+                .retry(HttpStatusCodeException::class.java)
+                .retryLimit(1)
+                .build()
 
         return jobBuilderFactory.get("etl")
                 .start(setup)
@@ -71,10 +73,9 @@ class BatchConfiguration {
                 .build()
     }
 
-
     @Bean
     @StepScope
-    fun fileReader(@Value("file:/#{jobParameters['file']}") pathToFile: Resource, @Value("#{jobParameters}") param: Any, @Value("#{job}") job: Any): ItemReader<Contact> {
+    fun fileReader(@Value("file://#{jobParameters['file']}") pathToFile: Resource, @Value("#{jobParameters}") param: Any, @Value("#{job}") job: Any): FlatFileItemReader<Contact> {
         log.info("fileReader: " + pathToFile.exists())
         log.info("fileReader: " + pathToFile)
         log.info("fileReader: " + param)
@@ -107,14 +108,14 @@ class BatchConfiguration {
                 .build()
     }
 
-    class InvalidEmailException(email: String) : RuntimeException("the email $email isn't valid")
-
-    interface EmailValidationService {
-        fun isEmailValid(email: String): Boolean
-    }
-
     @Component
     class SimpleEmailValidationService : EmailValidationService {
-        override fun isEmailValid(email: String): Boolean = StringUtils.hasText(email) && email.length > 1 && email.contains("@")
+        override fun isEmailValid(email: String?): Boolean = StringUtils.hasText(email) && email!!.length > 1 && email.contains("@")
     }
 }
+
+interface EmailValidationService {
+    fun isEmailValid(email: String?): Boolean
+}
+
+class InvalidEmailException(email: String?) : Exception("the email $email isn't valid")

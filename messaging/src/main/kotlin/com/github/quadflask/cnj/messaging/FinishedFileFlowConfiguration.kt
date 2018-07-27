@@ -37,6 +37,7 @@ class FinishedFileFlowConfiguration {
                                     rs.getLong("id"))
                         }
                         contacts.forEach(log::info)
+                        null
                     }
                     .get()
 }
