@@ -27,7 +27,7 @@ class EtlFlowConfiguration {
 
     @Bean
     fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File, c: BatchChannels, launcher: JobLauncher, job: Job): IntegrationFlow = IntegrationFlows
-            .from(Files.inboundAdapter(dir).autoCreateDirectory(true)) { cs ->
+            .from(Files.inboundAdapter(dir).autoCreateDirectory(true).patternFilter("*.csv")) { cs ->
                 cs.poller { p -> p.fixedRate(1000) }
             }
             .handle(File::class.java) { file, headers ->
@@ -44,23 +44,12 @@ class EtlFlowConfiguration {
             }
             .handle(JobLaunchingGateway(launcher))
             .routeToRecipients { spec ->
-                spec.recipient(c.invalid(), csvSelector(this::notFinished))
-                        .recipient(c.completed(), csvSelector(this::finished))
+                spec.recipient(c.invalid(), MessageSelector { notFinished(it) })
+                        .recipient(c.completed(), MessageSelector { finished(it) })
             }
             .get()
 
-    fun finished(msg: Message<*>): Boolean {
-        return JobExecution::class.java.cast(msg.payload).exitStatus == ExitStatus.COMPLETED
-    }
+    fun finished(msg: Message<*>): Boolean = JobExecution::class.java.cast(msg.payload).exitStatus == ExitStatus.COMPLETED
 
     fun notFinished(msg: Message<*>): Boolean = !this.finished(msg)
-
-    fun csvSelector(f: (m: Message<*>) -> Boolean): MessageSelector {
-        return MessageSelector { msg ->
-            val je = JobExecution::class.java.cast(msg.payload)
-            val fileName = je.jobParameters.getString("file")
-            if (fileName.endsWith(".csv")) f(msg)
-            else false
-        }
-    }
 }
