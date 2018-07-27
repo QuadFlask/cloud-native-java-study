@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.cloud.stream.annotation.EnableBinding
+import org.springframework.cloud.stream.annotation.StreamListener
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
 import org.springframework.integration.dsl.IntegrationFlow
@@ -35,6 +36,16 @@ class StreamConsumer {
 
     @Bean
     fun broadcast(channels: ConsumerChannels): IntegrationFlow = incomingMessageFlow(channels.broadcasts(), "broadcasts")
+
+    @StreamListener(ConsumerChannels.DIRECTED)
+    fun onNewDirectedGreetings(msg: String) {
+        log.info("onNewDirectedGreetings: $msg")
+    }
+
+    @StreamListener(ConsumerChannels.BROADCASTS)
+    fun onNewBroadcastGreetings(msg: String) {
+        log.info("onNewBroadcastGreetings: $msg")
+    }
 }
 
 fun main(args: Array<String>) {
