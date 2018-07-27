@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        broadcastGreetings:
+          destination: greetings-pub-sub
+        directGreetings:
+          destination: greetings-p2p
+
+
+  rabbitmq:
+    addresses: localhost
+
+server:
+  port: 8080

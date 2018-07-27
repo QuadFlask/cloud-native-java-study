@@ -1,0 +1,11 @@
+spring:
+  cloud:
+    stream:
+      binders:
+        broadcastGreetings:
+          destination: greetings-pub-sub
+        directGreetings:
+          destination: greetings-p2p
+
+  rabbitmq:
+    addresses: localhost

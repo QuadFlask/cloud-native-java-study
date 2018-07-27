@@ -1,0 +1,16 @@
+spring:
+  cloud:
+    stream:
+      bindings:
+        broadcasts:
+          destination: greetings-pub-sub
+        directed:
+          destination: greetings-p2p
+          group: greetings-p2p-group
+          durableSubscription: true
+
+  rabbitmq:
+    addresses: localhost
+
+server:
+  port: 0
