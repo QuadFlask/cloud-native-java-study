@@ -62,6 +62,8 @@ class BatchApplication(val env: Environment) {
     fun path(home: String, fileName: String): String = File(home, fileName).absolutePath
 }
 
+typealias IntMap = Map<Int, Int>
+
 fun main(args: Array<String>) {
     runApplication<BatchApplication>(*args)
 }
@@ -79,7 +81,6 @@ class BatchConfiguration {
                 .chunk<Person, Person>(1000)
                 .faultTolerant()
                 .skip(InvalidEmailException::class.java)
-                .skipLimit(10)
                 .retry(HttpStatusCodeException::class.java)
                 .retryLimit(2)
                 .reader(step2.fileReader(null))
@@ -88,7 +89,7 @@ class BatchConfiguration {
                 .build()
 
         val s3 = sbf.get("db-file")
-                .chunk<Map<Int, Int>, Map<Int, Int>>(100)
+                .chunk<IntMap, IntMap>(100)
                 .reader(step3.jdbcReader(null))
                 .writer(step3.fileWriter(null))
                 .build()
@@ -145,7 +146,7 @@ class Step2Configuration {
 @Configuration
 class Step3Configuration {
     @Bean
-    fun jdbcReader(dataSource: DataSource?): JdbcCursorItemReader<Map<Int, Int>> = JdbcCursorItemReaderBuilder<Map<Int, Int>>()
+    fun jdbcReader(dataSource: DataSource?): JdbcCursorItemReader<IntMap> = JdbcCursorItemReaderBuilder<IntMap>()
             .name("jdbc-reader")
             .dataSource(dataSource)
             .sql("select COUNT(age) c, age a from PEOPLE group by age")
@@ -156,10 +157,10 @@ class Step3Configuration {
 
     @Bean
     @StepScope
-    fun fileWriter(@Value("file://#{jobParameters['output']}") output: Resource?): FlatFileItemWriter<Map<Int, Int>> = FlatFileItemWriterBuilder<Map<Int, Int>>()
+    fun fileWriter(@Value("file://#{jobParameters['output']}") output: Resource?): FlatFileItemWriter<IntMap> = FlatFileItemWriterBuilder<IntMap>()
             .name("file-writer")
             .resource(output)
-            .lineAggregator(DelimitedLineAggregator<Map<Int, Int>>().apply {
+            .lineAggregator(DelimitedLineAggregator<IntMap>().apply {
                 setDelimiter(",")
                 setFieldExtractor { ageAndCount ->
                     val next = ageAndCount.entries.iterator().next()
