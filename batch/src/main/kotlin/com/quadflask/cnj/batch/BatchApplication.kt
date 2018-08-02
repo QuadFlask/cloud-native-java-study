@@ -50,7 +50,7 @@ class BatchApplication(val env: Environment) {
     fun jdbcTemplate(dataSource: DataSource) = JdbcTemplate(dataSource)
 
     @Bean
-    fun run(launcher: JobLauncher, job: Job, @Value("\${user.dir}/batch/src/main/resources") home: String): CommandLineRunner {
+    fun run(launcher: JobLauncher, job: Job, @Value("\${user.dir}/batch/src/main/resources") home: String, jdbcTemplate: JdbcTemplate): CommandLineRunner {
         return CommandLineRunner {
             launcher.run(job, JobParametersBuilder()
                     .addString("input", path(home, "in.csv"))
@@ -78,7 +78,7 @@ class BatchConfiguration {
                 .build()
 
         val s2 = sbf.get("file-db")
-                .chunk<Person, Person>(1000)
+                .chunk<Person, Person>(10)
                 .faultTolerant()
                 .skip(InvalidEmailException::class.java)
                 .retry(HttpStatusCodeException::class.java)
@@ -163,8 +163,8 @@ class Step3Configuration {
             .lineAggregator(DelimitedLineAggregator<IntMap>().apply {
                 setDelimiter(",")
                 setFieldExtractor { ageAndCount ->
-                    val next = ageAndCount.entries.iterator().next()
-                    arrayOf(next.key, next.value)
+                    val (key, value) = ageAndCount.entries.iterator().next()
+                    arrayOf(key, value)
                 }
             })
             .build()
