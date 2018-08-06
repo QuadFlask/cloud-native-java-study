@@ -78,16 +78,65 @@ https://www.slideshare.net/WangeunLee/spring-integration-47185594
 
 ---
 
+## 예제 10-2
+
+```kotlin
+@Bean
+fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): IntegrationFlow = IntegrationFlows
+        .from(Files.inboundAdapter(dir).autoCreateDirectory(true)) {
+            it.poller { spec -> spec.fixedRate(1000) }
+        }
+        .handle(File::class.java) { file, _ ->
+            log.info("we noticed a new file, $file")
+            file
+        }
+        .routeToRecipients { spec ->
+            spec.recipient(csv(), MessageSelector { msg -> hasExt(msg.payload, ".csv") })
+                    .recipient(txt(), MessageSelector { msg -> hasExt(msg.payload, ".txt") })
+        }.get()
+
+@Bean fun txt(): MessageChannel = MessageChannels.direct().get()
+@Bean fun csv(): MessageChannel = MessageChannels.direct().get()
+@Bean fun txtFlow(): IntegrationFlow = IntegrationFlows.from(txt()).handle(File::class.java) { _, _ ->
+    log.info("file is .txt!")
+    null
+}.get()
+
+@Bean fun csvFlow(): IntegrationFlow = IntegrationFlows.from(csv()).handle(File::class.java) { _, _ ->
+    log.info("file is .csv!")
+    null
+}.get()
+
+```
+
+---
+
+
 ## 에제 10-3 ~ 6
 
--- File -->
-FileInboundAdapter
--- `Message<JobLaunchRequest(job, params)>` -->
-JobLaunchingGateway(JobLauncher)
-[ fileReader, emailProcessor, jdbcWriter ]
--- `Message<JobExcution>` --> route
---> completed `MessageChannel`
---> invalid `MessageChannel`
+```js
+           File
+            |
+ +----------v-----------+
+ |  FileInboundAdapter  |
+ +----------+-----------+
+            |
+            | Message<JobLaunchRequest<Job, Param>>
+            |
+ +----------v-----------+            +--------------+
+ | JobLaunchingGateway  +----------->+  fileReader  |
+ +----------+-----------+            |      V       |
+            |                        |emailProcessor|
+            | Message<JobExcution>   |      V       |
+            |                        |  jdbcWriter  |
+     +------+------+                 +--------------+
+     |    route    |
+     v             v
++----+----+    +---+---+
+|completed|    |invalid|
+| channel |    |channel|
++---------+    +-------+
+```
 
 ---
 
@@ -243,7 +292,7 @@ spring:
     addresses: localhost
 
 ```
-> 프로듀서에서 정의한 `destication`(랑데뷰 포인트)을 똑같이 지정해준다
+> 프로듀서에서 정의한 `destination`(랑데뷰 포인트)을 똑같이 지정해준다
 > `group`: 그룹에 속한 하나의 멤버만이 메시지를 받도록
 > `durableSubscription`: 메시지를 전달하지 못했을 때 컨슈머가 다시 접속할 때까지 저장했다가 전달하는 내구성 옵션
 ---
@@ -258,7 +307,7 @@ fun incomingMessageFlow(incoming: SubscribableChannel, prefix: String): Integrat
          log.info("greeting received in IntegrationFlow ($prefix): $greetings")
          null
       }.get()
-    }
+   }
 
    @Bean
    fun direct(channels: ConsumerChannels): IntegrationFlow = 
@@ -272,7 +321,7 @@ fun incomingMessageFlow(incoming: SubscribableChannel, prefix: String): Integrat
 
 ---
 
-## 스트림 컨슈머 - 스트릠 리스너
+## 스트림 컨슈머 - 스트림 리스너
 
 ```kotlin
 @StreamListener(ConsumerChannels.DIRECTED)
