@@ -83,17 +83,15 @@ https://www.slideshare.net/WangeunLee/spring-integration-47185594
 ```kotlin
 @Bean
 fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): IntegrationFlow = IntegrationFlows
-        .from(Files.inboundAdapter(dir).autoCreateDirectory(true)) {
-            it.poller { spec -> spec.fixedRate(1000) }
-        }
-        .handle(File::class.java) { file, _ ->
-            log.info("we noticed a new file, $file")
-            file
-        }
-        .routeToRecipients { spec ->
-            spec.recipient(csv(), MessageSelector { msg -> hasExt(msg.payload, ".csv") })
-                    .recipient(txt(), MessageSelector { msg -> hasExt(msg.payload, ".txt") })
-        }.get()
+   .from(Files.inboundAdapter(dir).autoCreateDirectory(true)) {
+      it.poller { spec -> spec.fixedRate(1000) }
+   }.handle(File::class.java) { file, _ ->
+      log.info("we noticed a new file, $file")
+      file
+   }.routeToRecipients { spec ->
+      spec.recipient(csv(), MessageSelector { msg -> hasExt(msg.payload, ".csv") })
+          .recipient(txt(), MessageSelector { msg -> hasExt(msg.payload, ".txt") })
+   }.get()
 
 @Bean fun txt(): MessageChannel = MessageChannels.direct().get()
 @Bean fun csv(): MessageChannel = MessageChannels.direct().get()
@@ -101,7 +99,6 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): Integr
     log.info("file is .txt!")
     null
 }.get()
-
 @Bean fun csvFlow(): IntegrationFlow = IntegrationFlows.from(csv()).handle(File::class.java) { _, _ ->
     log.info("file is .csv!")
     null
@@ -122,8 +119,8 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): Integr
  +----------+-----------+
             |
             | Message<JobLaunchRequest<Job, Param>>
-            |
- +----------v-----------+            +--------------+
+            v
+ +----------------------+            +--------------+
  | JobLaunchingGateway  +----------->+  fileReader  |
  +----------+-----------+            |      V       |
             |                        |emailProcessor|
@@ -132,10 +129,11 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): Integr
      +------+------+                 +--------------+
      |    route    |
      v             v
-+----+----+    +---+---+
-|completed|    |invalid|
-| channel |    |channel|
-+---------+    +-------+
++----+----+   +----+----+
+|completed|   | invalid |
+| message |   | message |
+| channel |   | channel |
++---------+   +---------+
 ```
 
 ---
