@@ -79,7 +79,6 @@ https://www.slideshare.net/WangeunLee/spring-integration-47185594
 ---
 
 ## 예제 10-2
-
 ```kotlin
 @Bean
 fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): IntegrationFlow = IntegrationFlows
@@ -103,7 +102,6 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): Integr
     log.info("file is .csv!")
     null
 }.get()
-
 ```
 
 ---
@@ -134,6 +132,35 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): Integr
 | message |   | message |
 | channel |   | channel |
 +---------+   +---------+
+```
+
+---
+
+
+```kotlin
+@Bean
+fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File, 
+      c: BatchChannels, 
+      launcher: JobLauncher, 
+      job: Job): IntegrationFlow = IntegrationFlows
+   .from(Files.inboundAdapter(dir).autoCreateDirectory(true).patternFilter("*.csv")) { cs ->
+      cs.poller { p -> p.fixedRate(1000) }
+   }.handle(File::class.java) { file, headers ->
+      val absolutePath = file.absolutePath
+      val params = JobParametersBuilder().addString("file", absolutePath).toJobParameters()
+
+      MessageBuilder
+              .withPayload(JobLaunchRequest(job, params))
+              .setHeader(FileHeaders.ORIGINAL_FILE, absolutePath)
+              .copyHeadersIfAbsent(headers)
+              .build()
+   }.handle(JobLaunchingGateway(launcher))
+   .routeToRecipients { spec ->
+      spec.recipient(c.invalid(), MessageSelector { notFinished(it) })
+          .recipient(c.completed(), MessageSelector { finished(it) })
+   }.get()
+
+   fun finished(msg: Message<*>): Boolean = JobExecution::class.java.cast(msg.payload).exitStatus == ExitStatus.COMPLETED
 ```
 
 ---
