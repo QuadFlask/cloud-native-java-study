@@ -20,10 +20,6 @@ class StreamConsumer {
 
     fun incomingMessageFlow(incoming: SubscribableChannel, prefix: String): IntegrationFlow {
         return IntegrationFlows.from(incoming)
-                .transform<ByteArray, String> {
-                    log.info(it)
-                    String(it)
-                }
                 .transform(String::class.java, String::toUpperCase)
                 .handle(String::class.java) { greetings, _ ->
                     log.info("greeting received in IntegrationFlow ($prefix): $greetings")

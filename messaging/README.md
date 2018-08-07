@@ -361,7 +361,6 @@ spring:
 ```kotlin
 fun incomingMessageFlow(incoming: SubscribableChannel, prefix: String): IntegrationFlow {
    return IntegrationFlows.from(incoming)
-      .transform<ByteArray, String> { String(it) }
       .transform(String::class.java, String::toUpperCase)
       .handle(String::class.java) { greetings, _ ->
          log.info("greeting received in IntegrationFlow ($prefix): $greetings")
@@ -377,7 +376,6 @@ fun direct(channels: ConsumerChannels): IntegrationFlow =
 fun broadcast(channels: ConsumerChannels): IntegrationFlow = 
    incomingMessageFlow(channels.broadcasts(), "broadcasts")
 ```
-> 메시지 컨텐츠 타입이 왜 ByteArray???
 
 ---
 
