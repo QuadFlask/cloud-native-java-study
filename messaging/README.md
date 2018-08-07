@@ -81,8 +81,8 @@ https://www.slideshare.net/WangeunLee/spring-integration-47185594
 ## 예제 10-2
 ```kotlin
 @Bean
-fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): IntegrationFlow = IntegrationFlows
-   .from(Files.inboundAdapter(dir).autoCreateDirectory(true)) {
+fun etlFlow(@Value("\${input-directory:\${HOME}}") dir: File): IntegrationFlow = 
+   IntegrationFlows.from(Files.inboundAdapter(dir)) {
       it.poller { spec -> spec.fixedRate(1000) }
    }.handle(File::class.java) { file, _ ->
       log.info("we noticed a new file, $file")
@@ -105,7 +105,6 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): Integr
 ```
 
 ---
-
 
 ## 에제 10-3 ~ 6
 
@@ -136,18 +135,19 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File): Integr
 
 ---
 
-
+IntegrationConfiguration
 ```kotlin
 @Bean
-fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File, 
+fun etlFlow(@Value("\${input-directory:\${HOME}/in}") dir: File, 
       c: BatchChannels, 
       launcher: JobLauncher, 
       job: Job): IntegrationFlow = IntegrationFlows
-   .from(Files.inboundAdapter(dir).autoCreateDirectory(true).patternFilter("*.csv")) { cs ->
+   .from(Files.inboundAdapter(dir).patternFilter("*.csv")) { cs ->
       cs.poller { p -> p.fixedRate(1000) }
    }.handle(File::class.java) { file, headers ->
       val absolutePath = file.absolutePath
-      val params = JobParametersBuilder().addString("file", absolutePath).toJobParameters()
+      val params = JobParametersBuilder().addString("file", absolutePath)
+                                         .toJobParameters()
 
       MessageBuilder
               .withPayload(JobLaunchRequest(job, params))
@@ -165,18 +165,49 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/Desktop/in}") dir: File,
 
 ---
 
+FinishedFileFlowConfiguration
+```kotlin
+@Bean
+fun finishedJobsFlow(channels: BatchChannels, 
+                @Value("\${input-directory:\${HOME}/completed}") finished: File, 
+                jdbcTemplate: JdbcTemplate): IntegrationFlow = IntegrationFlows
+      .from(channels.completed())
+      .handle(JobExecution::class.java) { _, headers ->
+          val ogFileName = headers[FileHeaders.ORIGINAL_FILE].toString()
+          val file = File(ogFileName)
+
+          mv(file, finished)
+
+          val contacts = jdbcTemplate.query("select * from CONTACT") { rs, _ ->
+             Contact(
+                rs.getString("full_name"),
+                rs.getString("email"),
+                rs.getBoolean("valid_email"),
+                rs.getLong("id"))
+             }
+             contacts.forEach(log::info)
+             null
+          }.get()
+```
+
+---
+
 # 메시지 브로커, 브릿지, 경쟁적 컨슈머 패턴, 이벤트 소싱
 
 ## 메시지 브로커
 > 브로커에 메시지가 유입되면 누군가 가져갈(소비) 때까지 저장
 
-## 두가지 목적지 타입
+### 두가지 목적지 타입
 
 - 점대점(point to point)
   > 하나의 메시지를 단 하나의 컨슈머에게 전달
 
 - 발행-구독(pub-sub)
-  > 유입된 하나의 메시지를연결된 모든 구독자가 받는다
+  > 유입된 하나의 메시지를 연결된 모든 구독자에게 전달
+
+> 경쟁적 컨슈머 패턴: 점대점 메시징에서 브로커에 연결된 다수의 컨슈머가 유입된 메시지를 가져가서 처리하는 구조
+> 
+> 이벤트 소싱: 도메인에서 발생하고 있는 모든 이벤트를 순서대로 로깅하고 이 로그를 새로운 시스템에 순서대로 주입해서 시스템의 상태를 원하는 시간으로 되돌릴 수 있는 패턴
 
 ---
 
@@ -233,6 +264,9 @@ spring:
   rabbitmq:
     addresses: localhost
 ```
+`broadcastGreetings`, `directGreetings` 는 메시지 채널 이름
+`greetings-pub-sub`, `greetings-p2p` 는 프로듀서와 컨슈머가 만날 접점(랑데뷰 포인트)
+
 ---
 ## 스트림 프로듀서 - 직접 보내기
 ```kotlin
@@ -359,3 +393,8 @@ fun onNewBroadcastGreetings(msg: String) {
     log.info("onNewBroadcastGreetings: $msg")
 }
 ```
+
+---
+brew services start rabbitmq-server
+http://localhost:15672/
+
