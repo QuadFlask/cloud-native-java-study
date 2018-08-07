@@ -396,6 +396,6 @@ fun onNewBroadcastGreetings(msg: String) {
 ```
 
 ---
-brew services start rabbitmq-server
+brew services start rabbitmq
 http://localhost:15672/
 
