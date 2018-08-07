@@ -160,7 +160,7 @@ fun etlFlow(@Value("\${input-directory:\${HOME}/in}") dir: File,
           .recipient(c.completed(), MessageSelector { finished(it) })
    }.get()
 
-   fun finished(msg: Message<*>): Boolean = JobExecution::class.java.cast(msg.payload).exitStatus == ExitStatus.COMPLETED
+fun finished(msg: Message<*>): Boolean = JobExecution::class.java.cast(msg.payload).exitStatus == ExitStatus.COMPLETED
 ```
 
 ---
@@ -169,8 +169,8 @@ FinishedFileFlowConfiguration
 ```kotlin
 @Bean
 fun finishedJobsFlow(channels: BatchChannels, 
-                @Value("\${input-directory:\${HOME}/completed}") finished: File, 
-                jdbcTemplate: JdbcTemplate): IntegrationFlow = IntegrationFlows
+              @Value("\${input-directory:\${HOME}/completed}") finished: File, 
+              jdbcTemplate: JdbcTemplate): IntegrationFlow = IntegrationFlows
       .from(channels.completed())
       .handle(JobExecution::class.java) { _, headers ->
           val ogFileName = headers[FileHeaders.ORIGINAL_FILE].toString()
@@ -184,10 +184,10 @@ fun finishedJobsFlow(channels: BatchChannels,
                 rs.getString("email"),
                 rs.getBoolean("valid_email"),
                 rs.getLong("id"))
-             }
-             contacts.forEach(log::info)
-             null
-          }.get()
+          }
+          contacts.forEach(log::info)
+          null
+      }.get()
 ```
 
 ---
@@ -316,6 +316,7 @@ interface GreetingGateway {
 
 ```
 interface ConsumerChannels {
+
     companion object {
         const val DIRECTED = "directed"
         const val BROADCASTS = "broadcasts"
@@ -368,13 +369,13 @@ fun incomingMessageFlow(incoming: SubscribableChannel, prefix: String): Integrat
       }.get()
    }
 
-   @Bean
-   fun direct(channels: ConsumerChannels): IntegrationFlow = 
-      incomingMessageFlow(channels.directed(), "directed")
+@Bean
+fun direct(channels: ConsumerChannels): IntegrationFlow = 
+   incomingMessageFlow(channels.directed(), "directed")
 
-   @Bean
-   fun broadcast(channels: ConsumerChannels): IntegrationFlow = 
-      incomingMessageFlow(channels.broadcasts(), "broadcasts")
+@Bean
+fun broadcast(channels: ConsumerChannels): IntegrationFlow = 
+   incomingMessageFlow(channels.broadcasts(), "broadcasts")
 ```
 > 메시지 컨텐츠 타입이 왜 ByteArray???
 
